@@ -58,7 +58,7 @@ class soundCard:
     def recordAndPlay(self, data):
         """
         record and play data at the same time
-        #NOT TESTED (no microphone for the moment)
+        #TESTED (working with a laptop)
         """
         myrecording = sd.playrec(data, self.samplerate, self.channels)
         
@@ -70,8 +70,8 @@ sound = soundCard()
 sound.play(sound.createSound(500,5))
 
 #need to be tested with microphone
-sound.recordAndPlay(sound.createSound(500,5))
-
+myrecording = sound.recordAndPlay(sound.createSound(500,5))
+sound.play(myrecording)
 
 
 
