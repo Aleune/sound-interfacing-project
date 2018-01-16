@@ -7,26 +7,40 @@ Created on Fri Jan 12 12:30:56 2018
 
 import numpy as np
 import matplotlib.pyplot as plt
+
+#https://python-sounddevice.readthedocs.io/en/0.3.10/
 import sounddevice as sd  #!pip install sounddevice
 from scipy import signal as sg #for the square function
 from scipy.signal import blackmanharris, fftconvolve
 from matplotlib.mlab import find
-from numpy.fft import rfft, fft
-
-
+from numpy.fft import rfft, fft, rfftfreq, irfft
 import soundfile as sf
 
 
 
-class soundCard:
+def low_filter_function(f, fc):
+    """
+    low pass transfert function
+    """
+    return 1/(1+1j*(f/fc))
+    
+def high_filter_function(f, fc):
+    """
+    high pass transfert function
+    """
+    return 1j*(f/fc)/(1+1j*(f/fc))
+
+
+
+class SoundCard(object):
+    samplerate = 44100
+    channels = 2
     
     
     def __init__(self) :
-        self.samplerate = 44100
-        self.channels = 2
         print("creation of the soundCard object")
         
-    def createSound(self, frequency, duration):
+    def create_sound(self, frequency, duration):
         """
         create sound with frequency (Hz) for duration (s)
         sin wave or square
@@ -45,14 +59,14 @@ class soundCard:
         """
         sd.play(data, self.samplerate)
 
-    @staticmethod
-    def stop():
+
+    def stop(self):
         """
         can be used to stop playing before the end
         """
         sd.stop()
         
-    def recordSound(self, duration):
+    def record_sound(self, duration):
         """
         Record sound for duration (s)
         """
@@ -60,10 +74,10 @@ class soundCard:
     
         return myrecording
         
-    def setsamplerate(self, samplerate):
+    def set_samplerate(self, samplerate):
         self.samplerate = samplerate
         
-    def recordAndPlay(self, data):
+    def record_and_play(self, data):
         """
         record and play data at the same time
         #TESTED (working with a laptop)
@@ -72,11 +86,21 @@ class soundCard:
         
         return myrecording
     
-    @staticmethod
-    def freq_from_crossings(sig, fs):
+
+
+
+class SignalAnalysis(object):
+    
+    def __init__(self, data, sample_rate=44100):
+        self.data = data
+        self.sample_rate = sample_rate
+        
+
+    def freq_from_crossings(self):
         """
         Estimate frequency by counting zero crossings
         """
+        sig = self.data
         # Find all indices right before a rising-edge zero crossing
         indices = find((sig[1:] >= 0) & (sig[:-1] < 0))
     
@@ -87,67 +111,91 @@ class soundCard:
         # zero-crossings (Measures 1000.000129 Hz for 1000 Hz, for instance)
         crossings = [i - sig[i] / (sig[i+1] - sig[i]) for i in indices]
     
-        # Some other interpolation based on neighboring points might be better.
-        # Spline, cubic, whatever
     
-        return fs / np.mean(np.diff(crossings))
+        #np.diff create an array with difference one by one out[n] = a[n+1] - a[n]
     
-    @staticmethod
-    def frequency_plot(signal, sf):
+        return self.sample_rate / np.mean(np.diff(crossings))
+    
+
+    def plot_signal(self):
+        plt.plot(self.data)
+        
+    def plot_psd(self):
+        
+        freq, psd = sg.periodogram(self.data, fs = self.sample_rate, window = 'flattop')
+        plt.loglog(freq, psd)
+        
+
+        
+    def low_pass_filter(self, fc):
         """
-            plot the power vs frequency
-            source : http://samcarcagno.altervista.org/blog/basic-sound-processing-python/
+        filtering with low filter, cuttoff frequency fc
+        output in temporal space
+        maybe not useful if it's for re-ploting in fourier space... ?
         """
-        n =len(signal)
-        fftSignal = fft(signal) # calculate fourier transform (complex numbers list)
         
-        nUniquePts = int(np.ceil((n+1)/2.0))
-        fftSignal = fftSignal[0:nUniquePts]
-        fftSignal = abs(fftSignal) #amplitude Part
+        #Fourier space
+        signal_tilde = rfft(self.data)
+        #sample frequencies
+        n = self.data.size
+        freq = rfftfreq(n, d=1./self.sample_rate)
+        H_f = [low_filter_function(i, fc) for i in freq]
         
-        fftSignal = fftSignal / float(n) # scale by the number of points so that
-                 # the magnitude does not depend on the length 
-                 # of the signal or on its sampling frequency  
-        fftSignal = fftSignal**2  # square it to get the power
+        signal_filtre_tilde = signal_tilde*(H_f*np.conjugate(H_f))
         
-        # multiply by two (see technical document for details)
-        # odd nfft excludes Nyquist point
-        if n % 2 > 0: # we've got odd number of points fft
-            fftSignal[1:len(fftSignal)] = fftSignal[1:len(fftSignal)] * 2
-        else:
-            fftSignal[1:len(fftSignal) -1] = fftSignal[1:len(fftSignal) - 1] * 2 # we've got even number of points fft
+        return irfft(signal_filtre_tilde)
         
-        freqArray = np.arange(0, nUniquePts, 1.0) * (sf / n);
-        plt.plot(freqArray/1000, 10*np.log10(fftSignal), color='b', alpha = 0.7)
-        plt.fill_between(freqArray/1000, 10*np.log10(fftSignal), np.min(10*np.log10(fftSignal)), color = 'b', alpha = 0.7)
-        plt.xlabel('Frequency (kHz)')
-        plt.ylabel('Power (dB)')
-
         
-    @staticmethod
-    def signal_plot(signal):
-        plt.plot(signal)
+    def hig_pass_filter(self, fc):
+        """
+        filtering with high pass filter, cuttoff frequency fc
+        output in temporal space
+        """
+        
+        #Fourier space
+        signal_tilde = rfft(self.data)
+        #sample frequencies
+        n = self.data.size
+        freq = rfftfreq(n, d=1./self.sample_rate)
+        H_f = [high_filter_function(i, fc) for i in freq]
+        
+        signal_filtre_tilde = signal_tilde*(H_f*np.conjugate(H_f))
+        
+        return irfft(signal_filtre_tilde)
+        
+
+sound = SoundCard()
 
 
+#Creation of test sound data
+test_sound = sound.create_sound(500,2)
 
 
-sound = soundCard()
-#Warning, loud, amplitude can be changed in the createSound method
-signal , sample = sf.read('E:/Documents/Cours/LUMI/Projet Prog/sound-interfacing-project/sound-interfacing-project/test.wav')
-sound.play(signal)
-sound.stop()
+#Playing sound
+sound.play(test_sound)
 
-a = sound.createSound(500,5)
-sound.freq_from_crossings(a, 44100)
-sound.play(sound.createSound(500,5))
 
-sound.signal_plot(a)
-sound.frequency_plot(a, 44100)
+#Recording data
+#sometimes i have to restart spyder after plunging the micro, tu update the list of device of soundevice maybe
+#check devices with sq.query_devices()
+myrecording = sound.record_and_play(test_sound)
 
-#need to be tested with microphone
-myrecording = sound.recordAndPlay(sound.createSound(500,5))
+#test recording
 sound.play(myrecording)
 
+
+#Data Analysis
+analysis = SignalAnalysis(myrecording[:,0])
+
+#ƒanalysis.plot_signal()
+#filter fonctions are working
+#maybe find another way to use the filter, here we need to create another object to analyse the filtered signal
+analysis.plot_psd()
+signall_filtre = analysis.low_pass_filter(200)
+
+
+analyis2 = SignalAnalysis(signall_filtre)
+analyis2.plot_psd()
 
 
 
