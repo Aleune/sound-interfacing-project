@@ -15,6 +15,7 @@ from scipy.signal import blackmanharris, fftconvolve
 from matplotlib.mlab import find
 from numpy.fft import rfft, fft, rfftfreq, irfft
 import soundfile as sf
+import random
 
 
 
@@ -49,9 +50,36 @@ class SoundCard(object):
         sample = self.samplerate*duration
         x = np.arange(sample)
         
-        sin_array = 10*np.sin(2*np.pi*frequency*x/self.samplerate)
+        sinArray = 10*np.sin(2*np.pi*frequency*x/self.samplerate)
         #square_array = 100*sg.square(2*np.pi*frequency*x/self.samplerate)
-        return sin_array
+        return sinArray
+    
+    def create_random_sound(self, duration):
+        """
+        random sound
+        """
+        
+        arrayRandom = [random.uniform(-10,10) for i in np.arange(0, self.samplerate*duration)]
+        
+        return np.asarray(arrayRandom)
+    
+    def add_delay(self, data, delay):
+        """
+        add a delay on one channel (add the channel)
+        return two dimensional array, data delayed on one
+        """
+        #get the part of data-duration*samplerate
+        dataCroped = data[:-delay*self.samplerate]
+        dataDelay = np.asarray([0 for i in range(delay*self.samplerate)])
+        dataDelayed = np.concatenate((dataDelay, dataCroped))
+        
+        
+        
+        return np.transpose(np.array((data, dataDelayed)))
+        #return dataDelayed
+        
+        
+        
     
     def play(self, data):
         """
@@ -162,6 +190,13 @@ class SignalAnalysis(object):
         signal_filtre_tilde = signal_tilde*(H_f*np.conjugate(H_f))
         
         return irfft(signal_filtre_tilde)
+    
+    def plot_auto_correlation(self):
+        
+        result = np.correlate(self.data, self.data, mode='full')
+        result = result[len(self.data)-1:]
+        result = result/max(result)
+        plt.plot(result)
         
 
 sound = SoundCard()
@@ -191,10 +226,10 @@ analysis = SignalAnalysis(myrecording[:,0])
 #filter fonctions are working
 #maybe find another way to use the filter, here we need to create another object to analyse the filtered signal
 analysis.plot_psd()
-signall_filtre = analysis.low_pass_filter(200)
+signallFiltre = analysis.low_pass_filter(200)
 
 
-analyis2 = SignalAnalysis(signall_filtre)
+analyis2 = SignalAnalysis(signallFiltre)
 analyis2.plot_psd()
 
 
