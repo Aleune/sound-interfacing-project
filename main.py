@@ -11,11 +11,13 @@ import matplotlib.pyplot as plt
 #https://python-sounddevice.readthedocs.io/en/0.3.10/
 import sounddevice as sd  #!pip install sounddevice
 from scipy import signal as sg #for the square function
-from scipy.signal import blackmanharris, fftconvolve
 from matplotlib.mlab import find
-from numpy.fft import rfft, fft, rfftfreq, irfft
-import soundfile as sf
+from numpy.fft import rfft, rfftfreq, irfft
 import random
+from scipy.optimize import curve_fit
+from scipy.signal import hilbert
+
+
 
 
 
@@ -31,6 +33,14 @@ def high_filter_function(f, fc):
     """
     return 1j*(f/fc)/(1+1j*(f/fc))
 
+def test_pendule_fit(x, amplSign, freqCarrier, freqSignal):
+    #return amplCar*np.cos(2*np.pi*freqCarrier*x)*(1+amplSign*np.cos(2*np.pi*freqSignal*x))
+    return np.cos(2*np.pi*freqCarrier*x)*amplSign*np.cos(2*np.pi*freqSignal*x)
+    #return np.cos(2*np.pi*freqCarrier*x)
+    
+def load_signal(file):
+    data = np.loadtxt(file)
+    return data
 
 
 class SoundCard(object):
@@ -141,8 +151,9 @@ class SignalAnalysis(object):
     
     
         #np.diff create an array with difference one by one out[n] = a[n+1] - a[n]
+        
     
-        return self.sample_rate / np.mean(np.diff(crossings))
+        return (indices, self.sample_rate / np.diff(crossings))
     
 
     def plot_signal(self):
@@ -198,45 +209,101 @@ class SignalAnalysis(object):
         result = result/max(result)
         plt.plot(result)
         
+        
+    def save_signal(self, file):
+        np.savetxt(file, self.data)
+        
+        
+    def getData(self):
+        return self.data
+
+
+
+
+
+
+
+#Creation and analyse
+#Pendulum
 
 sound = SoundCard()
+test_sound = sound.create_sound(2000,5)
+myRec = sound.record_and_play(test_sound)
 
-
-#Creation of test sound data
-test_sound = sound.create_sound(500,2)
-
-
-#Playing sound
-sound.play(test_sound)
-
-
-#Recording data
-#sometimes i have to restart spyder after plunging the micro, tu update the list of device of soundevice maybe
-#check devices with sq.query_devices()
-myrecording = sound.record_and_play(test_sound)
-
-#test recording
-sound.play(myrecording)
-
-
-#Data Analysis
-analysis = SignalAnalysis(myrecording[:,0])
-
-#ƒanalysis.plot_signal()
-#filter fonctions are working
-#maybe find another way to use the filter, here we need to create another object to analyse the filtered signal
+analysis = SignalAnalysis(myRec[:,0])
+analysis.plot_signal()
+plt.figure()
 analysis.plot_psd()
-signallFiltre = analysis.low_pass_filter(200)
+plt.figure()
+analysis.plot_auto_correlation()
+
+#Mesure distance between 2 speakers
+sound = SoundCard()
+#white sound on the two speaker, delay of 2sec on one
+test_sound2 = sound.add_delay(sound.create_random_sound(5),2)
+myRec2 = sound.record_and_play(test_sound2)
+
+analysis2 = SignalAnalysis(myRec2[:,0])
+plt.figure()
+analysis2.plot_signal()
+plt.figure()
+analysis2.plot_psd()
+plt.figure()
+analysis2.plot_auto_correlation()
 
 
-analyis2 = SignalAnalysis(signallFiltre)
-analyis2.plot_psd()
+
+#### FILTRAGE HF & LOW F####
+#Import file penduleData.txt
+#analysis = load_signal("penduleData.txt")
+filtre = analysis.hig_pass_filter(1000)
+analysis3 = SignalAnalysis(filtre)
+filtre2 = analysis3.low_pass_filter(4000)
+#exclude 11500 first values
+#analysis = SignalAnalysis(filtre2[11500:])
+analysis4 = SignalAnalysis(filtre2)
+plt.figure()
+analysis4.plot_psd()
+analysis.plot_psd()
+plt.plot(filtre2)
+
+#TEST FIT (not working)
+x = np.arange(0, 10*44100)
+p_opt2, cor_mat = curve_fit(test_pendule_fit, x, filtre2, (1, 1/150000, 1/20))
+y = test_pendule_fit(x, *p_opt2)
+plt.figure()
+plt.plot(y)
 
 
+#SIMULATION PENDULUM
+#pulsation
+omega = np.sqrt(9.81/2.82)
+#start angle (degres)
+theta0 = -0.18
+#time (10sec  *44100)
+t = np.arange(0,10,1/44100)
+vitesse = -theta0*omega*np.sin(omega *t)
+angle = theta0*np.cos(omega*t) 
 
+positionx = 2.82*np.tan(angle) #position en x
 
- 
+#Envelop with exponential attenuation (exp(-alpha r))
+#different values of alpha
+#0.024 bottom
+#0.01 top
+ampl = 0.12*np.exp(-0.01*positionx)
+#combining envelop and theoretical cos
+singlalTest = ampl*np.cos(2*np.pi*2000*t)
 
-
+#speed on x axis
+vitesseX = 2.82*(1+np.tan(angle)**2)*vitesse
+#frequency shift function of time
+indices, freq = analysis4.freq_from_crossings()
+#simulation doppler shift function of time
+dopplerTest = 2000*(1-vitesseX/340)
+x = np.arange(0, 10*44100)
+plt.figure()
+plt.plot(x, dopplerTest)
+plt.plot(indices[:-1], freq)
 
 
