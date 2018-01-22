@@ -42,6 +42,9 @@ def load_signal(file):
     data = np.loadtxt(file)
     return data
 
+def fit_sin(x, ampl, freq, phase):
+    return 2000 + ampl*np.sin(2*np.pi*freq*x+phase)
+
 
 class SoundCard(object):
     samplerate = 44100
@@ -255,7 +258,8 @@ analysis2.plot_auto_correlation()
 
 #### FILTRAGE HF & LOW F####
 #Import file penduleData.txt
-#analysis = load_signal("penduleData.txt")
+data = load_signal("penduleData.txt")
+analysis = SignalAnalysis(data)
 filtre = analysis.hig_pass_filter(1000)
 analysis3 = SignalAnalysis(filtre)
 filtre2 = analysis3.low_pass_filter(4000)
@@ -263,16 +267,18 @@ filtre2 = analysis3.low_pass_filter(4000)
 #analysis = SignalAnalysis(filtre2[11500:])
 analysis4 = SignalAnalysis(filtre2)
 plt.figure()
-analysis4.plot_psd()
 analysis.plot_psd()
+analysis4.plot_psd()
+
+plt.figure()
 plt.plot(filtre2)
 
 #TEST FIT (not working)
-x = np.arange(0, 10*44100)
-p_opt2, cor_mat = curve_fit(test_pendule_fit, x, filtre2, (1, 1/150000, 1/20))
-y = test_pendule_fit(x, *p_opt2)
-plt.figure()
-plt.plot(y)
+#x = np.arange(0, 10*44100)
+#p_opt2, cor_mat = curve_fit(test_pendule_fit, x, filtre2, (1, 1/150000, 1/20))
+#y = test_pendule_fit(x, *p_opt2)
+#plt.figure()
+#plt.plot(y)
 
 
 #SIMULATION PENDULUM
@@ -303,7 +309,24 @@ indices, freq = analysis4.freq_from_crossings()
 dopplerTest = 2000*(1-vitesseX/340)
 x = np.arange(0, 10*44100)
 plt.figure()
-plt.plot(x, dopplerTest)
 plt.plot(indices[:-1], freq)
+plt.plot(x, dopplerTest)
 
+indices2 = []
+freq2 = []
+
+for i in np.arange(0,len(freq)):
+    if(freq[i] < 2050 and freq[i] > 1950):
+        indices2.append(indices[i])
+        freq2.append(freq[i])
+        
+indices2 = np.array(indices2)
+freq2 = np.array(freq2)
+
+p_opt, cor_mat = curve_fit(fit_sin, indices2, freq2, (20, 1/150000, 1))
+y = fit_sin(indices2, *p_opt)
+plt.figure()
+
+plt.plot(indices2, freq2)
+plt.plot(indices2, y)
 
