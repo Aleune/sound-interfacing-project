@@ -45,7 +45,7 @@ def handle_close(evt):
 def loop_play(arg):
     t = currentThread()
     while getattr(t, "do_run", True):
-        stream.write(sound.astype(np.float32).tostring())
+        stream.write((sound.astype(np.float32)/10).tostring())
         stream.write(np.zeros(44100).astype(np.float32).tostring())
     print("Stopping as you wish.")
         

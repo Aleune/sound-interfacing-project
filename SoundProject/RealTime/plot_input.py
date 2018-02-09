@@ -11,7 +11,7 @@ sound = sg.chirp(t,10000, 0.05, 5000)
 t  =np.arange(0,60/44100,1/44100)
 sound = sg.chirp(t,15000, 60/44100, 15000)*np.sqrt(np.hanning(60))
 
-
+sound = soundObject.create_sound(2000, 5)
     
 
 RATE = 44100
@@ -39,13 +39,12 @@ def handle_close(evt):
     print('Closed Figure!')
     
 def loop_play(arg):
-    global dataWrite
     t = currentThread()
-    while getattr(t, "do_run", True):
+    while getattr(t, "do_run", True):        
+        stream.write((sound.astype(np.float32)/10).tostring())
+        print('test')
+        #stream.write(np.zeros(44100).astype(np.float32).tostring())
         
-        stream.write(sound.astype(np.float32).tostring())
-        stream.write(np.zeros(44100).astype(np.float32).tostring())
-        dataWrite = np.concatenate([sound, np.zeros(44100)])
     print("Stopping as you wish.")
         
 
@@ -65,7 +64,7 @@ test = []
 
 def initSound():
     ax1.set_ylim(-.1,.1)
-    ax1.set_xlim(0, 44100*5)
+    ax1.set_xlim(0, 44100*0.1)
     ax2.set_ylim( 1E-14, 1E-6)
     ax2.set_xlim(20, 23000)
     ax3.set_ylim(-0.2,1)
