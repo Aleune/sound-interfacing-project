@@ -9,7 +9,7 @@ Test file for pendulum experiment & data analysis
 
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import low_pass, high_pass
+from utils import low_pass, high_pass, lissage
 from scipy.optimize import curve_fit
 from SignalAnalysis import SignalAnalysis
 from SoundCard import SoundCard
@@ -19,8 +19,8 @@ from SoundCard import SoundCard
 
 
 
-LENGTH_PENDULUM = 0.54
-XPOS_START = 0.28 #cm
+LENGTH_PENDULUM = 0.54 #m
+XPOS_START = 0.28 #m
 START_ANGLE = -np.arctan(XPOS_START/LENGTH_PENDULUM)
 DURATION_RECORD = 10 #seconds
 SAMPLE_RATE = 44100
@@ -99,14 +99,14 @@ indices2 = []
 freq2 = []
 
 for i in np.arange(0,len(freq)):
-    if(freq[i] < 2050 and freq[i] > 1950):
+    if(freq[i] < 2030 and freq[i] > 1970):
         indices2.append(indices[i])
         freq2.append(freq[i])
         
 indices2 = np.array(indices2)
 freq2 = np.array(freq2)
 
-p_opt, cor_mat = curve_fit(fit_sin, indices2, freq2, (20, 1/150000, 1))
+p_opt, cor_mat = curve_fit(fit_sin, indices2, freq2, (10,omega/(2*np.pi*44100), 0))
 y = fit_sin(indices2, *p_opt)
 plt.figure()
 
@@ -114,6 +114,11 @@ plt.plot(indices2, freq2, label = "Data")
 plt.plot(indices2, y, label = "Fit")
 plt.plot(x, dopplerTest, label = 'Theoretical model')
 plt.legend()
+
+#Lissage
+u, v = lissage(indices2, freq2, 200)
+plt.plot(indices2, freq2, label = "Data")
+plt.plot(u,v)
 
 
 
@@ -140,3 +145,5 @@ plt.plot(Y_filter)
 
 plt.figure()
 plt.plot(phi_bis)
+
+np.savetxt("Data/penduleData_ok.txt", dataRaw)

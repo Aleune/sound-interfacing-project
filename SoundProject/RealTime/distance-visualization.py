@@ -9,9 +9,9 @@ import pyaudio
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from SoundProject.SoundCard import SoundCard
+from SoundCard import SoundCard
 from threading import Thread, currentThread
-from Utils.utils import low_pass, high_pass
+from utils import low_pass, high_pass
 
 soundObject = SoundCard()
 sound = soundObject.create_sound(2000, 5)
@@ -53,13 +53,22 @@ fig, ax = plt.subplots()
 fig.canvas.mpl_connect('close_event', handle_close)
 
 
-line, = ax.plot([], [], 'r', animated=True,linewidth=.5)
+line, = ax.plot([], [], 'r', animated=True,linewidth=.5,  markersize=1)
 
 
-a  = []
+i = 0
+z = []
+savePhi = 0
+
+count = 1
+
+import time
+
 
 def animate(frame):
-    global a
+    global i,z, count, savePhi
+    millis = int(round(time.time() * 1000))
+    #print(millis)
 #    
     data = soundplot(stream)
     dataFiltered = high_pass(data, 1900, 44100)
@@ -71,27 +80,39 @@ def animate(frame):
     Y = np.cos(2*np.pi*f*Tt)
     dataX = dataFiltered*X
     dataY = dataFiltered*Y
-    X_filter = low_pass(dataX, 100, 44100)
-    Y_filter = low_pass(dataY, 100, 44100)
+    X_filter = low_pass(dataX, 300, 44100)
+    Y_filter = low_pass(dataY, 300, 44100)
     phi = np.arctan2(X_filter, Y_filter)
     phi_bis = np.cumsum((phi[1:]-phi[:-1]+np.pi)%(2*np.pi)-np.pi)
+    count = count+1
+
     
-    a = phi_bis
-    line.set_ydata(phi_bis)  # update the data
-    line.set_xdata(np.arange(len(phi_bis)))
+    if i == 100:
+        z = z[len(phi_bis):]
+        z = np.ndarray.tolist(z)
+        z = np.concatenate((z,phi_bis+savePhi))
+        
+    else : 
+        z = np.concatenate((z,phi_bis+savePhi))
+        i = i+1
+    z = np.asarray(z)
+    
+    line.set_ydata(z)  # update the data
+    line.set_xdata(np.arange(len(z)))
+    savePhi = phi_bis[-100]
     return line,
 
 
 # Init only required for blitting to give a clean slate.
 def init():
     #line.set_ydata(np.ma.array(x, mask=True))
-    ax.set_ylim([-100, 100])
-    ax.set_xlim([0, 2203])
+    ax.set_ylim([-1, 1])
+    ax.set_xlim([0, 100*CHUNK])
     return line,
 
 my_thread = Thread(target=loop_play, args=("task",))
 my_thread.start() 
 
 ani = animation.FuncAnimation(fig, animate, init_func=init,
-                              interval=20, blit=True)
+                              interval=50, blit=True)
 plt.show()
