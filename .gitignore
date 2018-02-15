@@ -2,3 +2,9 @@
 *.ogg
 *.spydata
 main.py
+SoundProject/RealTime
+Utils/__pycache__
+SoundProject/__pycache__
+SoundProject/Pendulum
+.ipynb_checkpoints
+SoundProject/RealTime/testSonar.py
