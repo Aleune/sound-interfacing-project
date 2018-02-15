@@ -1,6 +1,6 @@
 import numpy as np
-from SignalAnalysis import SignalAnalysis
-from utils import low_pass, high_pass
+from SoundProject.SignalAnalysis import SignalAnalysis
+from Utils.utils import low_pass, high_pass
 
 
 
@@ -8,8 +8,16 @@ class SignalAnalysisPendulum(SignalAnalysis):
     
     
     def extractDistance(self, freq):
-        dataFiltered = high_pass(self.data, freq-100, 44100)
-        dataFiltered = low_pass(dataFiltered, freq+100, 44100)
+        """
+            Extract distance between microphoner and speaker for a pendulum
+            experiment using the phase of the signal.
+            
+            Parameters :
+                
+            freq : frequency of the signal used for the recording
+        """
+        dataFiltered = high_pass(self.data, freq-100, self.sample_rate)
+        dataFiltered = low_pass(dataFiltered, freq+100, self.sample_rate)
         n = len(dataFiltered)
         Tt = np.arange(n)/44100
         X = np.sin(2*np.pi*freq*Tt)

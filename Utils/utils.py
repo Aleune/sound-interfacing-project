@@ -1,28 +1,20 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 23 17:27:25 2018
-
-@author: Romain
-"""
-
 import numpy as np
 from numpy.fft import rfft, rfftfreq, irfft
 
 
 def high_pass(data, fc, sample_rate):
     """
-    filtering with high pass filter, cuttoff frequency fc
-    output in temporal space
+        Filtering with second order high pass filter            
+        fc cutoff frequency
+        
+        return data filtered
     """
     
-    #Fourier space
     signal_tilde = rfft(data)
-    #sample frequencies
     n = data.size
     freq = rfftfreq(n, d=1./sample_rate)
     
     H_f = 1j*(freq/fc)/(1+1j*(freq/fc))
-    #H_f = [high_filter_function(i, fc) for i in freq]
     
     signal_filtre_tilde = signal_tilde*(H_f*np.conjugate(H_f))
         
@@ -30,32 +22,27 @@ def high_pass(data, fc, sample_rate):
 
 def low_pass(data, fc, sample_rate):
     """
-    filtering with low filter, cuttoff frequency fc
-    output in temporal space
-    maybe not useful if it's for re-ploting in fourier space... ?
+        filtering with second order low pass filter
+        cuttoff frequency fc
     """
-        
-        
-    #Fourier space
+
     signal_tilde = rfft(data)
-    #sample frequencies
     n = data.size
     freq = rfftfreq(n, d=1./sample_rate)
     
     H_f = 1/(1+1j*(freq/fc))
-    #H_f = [low_filter_function(i, fc) for i in freq]
     
-    #signal*module carré de la fonction de transfert
     signal_filtre_tilde = signal_tilde*(H_f*np.conjugate(H_f))
     
     return irfft(signal_filtre_tilde)
 
 
-
-####Fonction de lissage
 def lissage(Lx,Ly,p):
-    '''Fonction qui débruite une courbe par une moyenne glissante
-    sur 2P+1 points'''
+    """
+        Moving average function over 2p+1 points
+        Lx, Ly, sets of data
+        p number of points
+    """
     Lxout=[]
     Lyout=[]
     Lxout = Lx[p: -p]

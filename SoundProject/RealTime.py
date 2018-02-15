@@ -1,10 +1,10 @@
 import pyaudio
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-from SoundCard import SoundCard
+from matplotlib import animation
+from SoundProject.SoundCard import SoundCard
 from scipy import signal as sg #for the square function
-from SignalAnalysisPendulum import SignalAnalysisPendulum
+from SoundProject.SignalAnalysisPendulum import SignalAnalysisPendulum
 
 
 class RealTime(object):
@@ -15,6 +15,11 @@ class RealTime(object):
     
     
     def sound3d(self):
+        """
+            Show in real time the soundwaves recorded via the microphone
+            and the Power Dessity Spectrum
+            Animation stop when the windows is closed
+        """
         saveData = []
         count = 0
 
@@ -35,7 +40,6 @@ class RealTime(object):
             stream.stop_stream()
             stream.close()
             p.terminate()
-            print('Closed Figure!')
    
         
         
@@ -82,13 +86,18 @@ class RealTime(object):
             lnTest.set_array(z[:-1,:-1].ravel())
             return lnTest,
         
-        ani = FuncAnimation(fig2, updateFreq, interval = 10, init_func=initFreq, blit = True)
+        ani = animation.FuncAnimation(fig2, updateFreq, interval = 10, init_func=initFreq, blit = True)
         plt.colorbar(lnTest, ax=ax, orientation='vertical', extend='max')
         plt.show()
         return ani
     
     
     def soundPsd(self):
+        """
+            Plot in real time the Power Spectrum Desity function of time
+            
+            Animation stop when the windows is closed
+        """
         
         saveData = []
         
@@ -106,8 +115,6 @@ class RealTime(object):
             stream.close()
             p.terminate()
             
-            
-            print('Closed Figure!')
         
         
         p=pyaudio.PyAudio()
@@ -146,11 +153,20 @@ class RealTime(object):
             
             return line
         
-        ani = FuncAnimation(fig, updateSound, interval = 20, init_func=initSound, blit = True)
+        ani = animation.FuncAnimation(fig, updateSound, interval = 20, init_func=initSound, blit = True)
         plt.show()
         return ani
         
     def distanceVisualisation(self):
+        """
+           Show in real time the phase of the recorded sound, which
+           is proportionnal to the distance between the microphone and
+           the speakers.
+           Play a continuous sound at 2000Hz.
+           Animation stop when the windows is closed
+           
+           Note : Still some frequency jumps
+        """
         soundObject = SoundCard()
 
         sound = soundObject.create_sound(2000, 1)
@@ -179,7 +195,6 @@ class RealTime(object):
             stream.stop_stream()
             stream.close()
             p.terminate()
-            print('Closed Figure!')
            
         stream.start_stream()  
         
@@ -194,9 +209,7 @@ class RealTime(object):
         z = []
         savePhi = 0
         
-        
-        
-        
+ 
         
         def animate(frame):
             nonlocal i,z, savePhi, saveData, time
@@ -229,7 +242,7 @@ class RealTime(object):
             return line,
         
         
-        ani = FuncAnimation(fig, animate, init_func=init,
+        ani = animation.FuncAnimation(fig, animate, init_func=init,
                                       interval=50, blit=True)
         plt.show()
         return ani
