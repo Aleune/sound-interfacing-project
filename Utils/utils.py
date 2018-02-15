@@ -52,5 +52,17 @@ def low_pass(data, fc, sample_rate):
 
 
 
+####Fonction de lissage
+def lissage(Lx,Ly,p):
+    '''Fonction qui débruite une courbe par une moyenne glissante
+    sur 2P+1 points'''
+    Lxout=[]
+    Lyout=[]
+    Lxout = Lx[p: -p]
+    for index in range(p, len(Ly)-p):
+        average = np.mean(Ly[index-p : index+p+1])
+        Lyout.append(average)
+    return Lxout,Lyout
+  
 
  
