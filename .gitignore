@@ -4,8 +4,11 @@
 main.py
 SoundProject/RealTime
 Utils/__pycache__
+Utils/findPeak.py
 SoundProject/__pycache__
 SoundProject/Pendulum
 SoundProject/DistanceBetweenSpeakers
 .ipynb_checkpoints
 SoundProject/RealTime/testSonar.py
+AnalysisPendulum.ipynb
+AnalysisPendulumYao.ipynb
