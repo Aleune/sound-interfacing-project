@@ -48,6 +48,7 @@ class SignalAnalysis(object):
         freq, psd = sg.periodogram(self.data, fs = self.sample_rate, window = 'flattop')
         plt.loglog(freq, psd, label = lab)
         
+        
 
         
     
@@ -56,7 +57,10 @@ class SignalAnalysis(object):
         result = np.correlate(self.data, self.data, mode='full')
         result = result[len(self.data)-1:]
         result = result/max(result)
-        plt.plot(result)
+        x = np.arange(len(result))/44100
+        plt.plot(x,result)
+              
+        
         
         
     def save_signal(self, file):

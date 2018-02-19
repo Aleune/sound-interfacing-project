@@ -15,8 +15,6 @@ class SoundCard(object):
     channels = 2
     
     
-    def __init__(self) :
-        print("creation of the soundCard object")
         
     def create_sound(self, frequency, duration):
         """

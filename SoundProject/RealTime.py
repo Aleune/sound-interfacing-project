@@ -19,6 +19,7 @@ class RealTime(object):
             Show in real time the soundwaves recorded via the microphone
             and the Power Dessity Spectrum
             Animation stop when the windows is closed
+            Play a chirp from 5000Hz to 200Hz
         """
         saveData = []
         count = 0
@@ -37,6 +38,9 @@ class RealTime(object):
             return (data, pyaudio.paContinue)
         
         def handle_close(evt):
+            """
+                Close the stream when the window is closed
+            """
             stream.stop_stream()
             stream.close()
             p.terminate()
@@ -70,7 +74,10 @@ class RealTime(object):
             return lnTest,
 
         def updateFreq(frame):
-            
+            """
+                Function called by matplotlib FuncAnimation to
+                refresh the plot
+            """
             nonlocal z, i, saveData
             data = saveData
             freq, psd = sg.periodogram(data, fs = 44100, window = 'flattop')
