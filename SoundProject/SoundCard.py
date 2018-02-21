@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 23 17:23:10 2018
-
-@author: Romain
-"""
-
 import numpy as np
 import sounddevice as sd  #!pip install sounddevice
 import random
+from scipy import signal as sg
 
 
 class SoundCard(object):
@@ -18,15 +12,13 @@ class SoundCard(object):
         
     def create_sound(self, frequency, duration):
         """
-        create sound with frequency (Hz) for duration (s)
-        sin wave or square
-        return an array with the data that can be played
+            Create sound with frequency (Hz) for duration (s)
+            Return an array with the recorded data that can be played
         """
         sample = self.samplerate*duration
         x = np.arange(sample)
         
         sinArray = 10*np.sin(2*np.pi*frequency*x/self.samplerate)
-        #square_array = 100*sg.square(2*np.pi*frequency*x/self.samplerate)
         return sinArray
     
     def create_random_sound(self, duration):
@@ -43,7 +35,6 @@ class SoundCard(object):
         add a delay on one channel (add the channel)
         return two dimensional array, data delayed on one
         """
-        #get the part of data-duration*samplerate
         dataCroped = data[:-delay*self.samplerate]
         dataDelay = np.asarray([0 for i in range(delay*self.samplerate)])
         dataDelayed = np.concatenate((dataDelay, dataCroped))
@@ -51,27 +42,26 @@ class SoundCard(object):
         
         
         return np.transpose(np.array((data, dataDelayed)))
-        #return dataDelayed
         
         
         
     
     def play(self, data):
         """
-        play the numpy array
+            Play the numpy array data
         """
         sd.play(data, self.samplerate)
 
 
     def stop(self):
         """
-        can be used to stop playing before the end
+            Can be used to stop playing before the end
         """
         sd.stop()
         
     def record_sound(self, duration):
         """
-        Record sound for duration (s)
+            Record sound for duration (s)
         """
         myrecording = sd.rec(duration * self.samplerate, samplerate=self.samplerate, channels=self.channels)
     
@@ -82,21 +72,22 @@ class SoundCard(object):
         
     def record_and_play(self, data):
         """
-        record and play data at the same time
-        #TESTED (working with a laptop)
+            Record and play data at the same time
         """
         myrecording = sd.playrec(data, self.samplerate, self.channels)
         
         return myrecording
     
-    def create_pulses(self, nbPulses, durationPulse, durationPause, frequency):
+    def create_chirp(self, frequencyStart, frequencyEnd, durationChirp, durationTot):
+        """
+            Create a chirp from a given frequency to another one in a given time
+            durationChirp
+            Add zeros for a time durationTot-durationCHirp
+        """
+        t  = np.arange(0,1,1/44100)
+        sound = sg.chirp(t,5000, 1, 200)
+        sound = np.concatenate((sound,np.zeros(44100)))
         
-        pulses = 10*np.sin(2*np.pi*frequency*np.arange(durationPulse*self.samplerate)/self.samplerate)
-        pauses = np.zeros(int(durationPause*44100))
-        data = np.concatenate((pauses, pulses))
-        
-        for i in np.arange(nbPulses-1):
-            data = np.concatenate((data, np.concatenate((pauses, pulses))))
+        return sound
     
-        return data
         

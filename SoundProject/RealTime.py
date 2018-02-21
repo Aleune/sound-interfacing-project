@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from SoundProject.SoundCard import SoundCard
-from scipy import signal as sg #for the square function
+from scipy import signal as sg
 from SoundProject.SignalAnalysisPendulum import SignalAnalysisPendulum
 
 
@@ -14,7 +14,7 @@ class RealTime(object):
     
     
     
-    def sound3d(self):
+    def sound3d(self, dataToPlay = []):
         """
             Show in real time the soundwaves recorded via the microphone
             and the Power Dessity Spectrum
@@ -23,18 +23,18 @@ class RealTime(object):
         """
         saveData = []
         count = 0
+        if len(dataToPlay) is 0:
+            dataToPlay = np.zeros(44100)
 
-        t  = np.arange(0,1,1/44100)
-        sound = sg.chirp(t,5000, 1, 200)
-        sound = np.concatenate((sound,np.zeros(44100)))
+        
         
         def callback(in_data, frame_count, time_info, status):
             nonlocal saveData, count
             saveData = np.fromstring(in_data,dtype=np.float32)
-            data = (sound[count*self.CHUNK:count*self.CHUNK+self.CHUNK].astype(np.float32)/10).tostring()
+            #eache time callback is called play CHUNK of data to play (count save the position)
+            data = (dataToPlay[count*self.CHUNK:count*self.CHUNK+self.CHUNK].astype(np.float32)/10).tostring()
             count = count+1
-            if count > len(sound)/self.CHUNK-1: count = 0
-            #data = (np.zeros(100).astype(np.float32)/10).tostring()
+            if count > len(dataToPlay)/self.CHUNK-1: count = 0
             return (data, pyaudio.paContinue)
         
         def handle_close(evt):
@@ -69,6 +69,10 @@ class RealTime(object):
         
         
         def initFreq():
+            """
+                Function used to initialize the window of the plot
+                Set dimensions of the window
+            """
             ax.set_xlim([0.0, 100])
             ax.set_ylim([0.0, 22000])
             return lnTest,
@@ -99,7 +103,7 @@ class RealTime(object):
         return ani
     
     
-    def soundPsd(self):
+    def soundPsd(self, dataToPlay):
         """
             Plot in real time the Power Spectrum Desity function of time
             
@@ -107,11 +111,17 @@ class RealTime(object):
         """
         
         saveData = []
+        count = 0
+        #check if dataToPlay is empty
+        if len(dataToPlay) is 0:
+            dataToPlay = np.zeros(44100)
         
         def callback(in_data, frame_count, time_info, status):
-            nonlocal saveData
+            nonlocal saveData, count
             saveData = np.fromstring(in_data,dtype=np.float32)
-            data = (np.zeros(44100).astype(np.float32)/10).tostring()
+            data = (dataToPlay[count*self.CHUNK:count*self.CHUNK+self.CHUNK].astype(np.float32)/10).tostring()
+            count = count+1
+            if count > len(dataToPlay)/self.CHUNK-1: count = 0
             return (data, pyaudio.paContinue)
         
         
