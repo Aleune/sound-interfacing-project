@@ -19,7 +19,7 @@ class RealTime(object):
             Show in real time the soundwaves recorded via the microphone
             and the Power Dessity Spectrum
             Animation stop when the windows is closed
-            Play a chirp from 5000Hz to 200Hz
+            Play dataToPlay in the same time
         """
         saveData = []
         count = 0
@@ -108,6 +108,7 @@ class RealTime(object):
             Plot in real time the Power Spectrum Desity function of time
             
             Animation stop when the windows is closed
+            Can play the array of data at the same time
         """
         
         saveData = []
