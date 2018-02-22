@@ -21,6 +21,8 @@ class SignalAnalysisPendulum(SignalAnalysis):
         """
         dataFiltered = high_pass(self.data[15000:], freq-150, self.sample_rate)
         dataFiltered = low_pass(dataFiltered, freq+150, self.sample_rate)
+        
+        #lock in system to extract the phase
         n = len(dataFiltered)
         Tt = np.arange(n)/44100
         X = np.sin(2*np.pi*freq*Tt)

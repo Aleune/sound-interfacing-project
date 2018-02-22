@@ -8,8 +8,7 @@ class SoundCard(object):
     samplerate = 44100
     channels = 2
     
-    
-        
+          
     def create_sound(self, frequency, duration):
         """
             Create sound with frequency (Hz) for duration (s)
@@ -23,17 +22,16 @@ class SoundCard(object):
     
     def create_random_sound(self, duration):
         """
-        random sound
+            Create white noise
         """
-        
         arrayRandom = [random.uniform(-10,10) for i in np.arange(0, self.samplerate*duration)]
         
         return np.asarray(arrayRandom)
     
     def add_delay(self, data, delay):
         """
-        add a delay on one channel (add the channel)
-        return two dimensional array, data delayed on one
+            Add a delay on one channel (add the channel)
+            Return two dimensional array, data delayed on one
         """
         dataCroped = data[:-delay*self.samplerate]
         dataDelay = np.asarray([0 for i in range(delay*self.samplerate)])
@@ -73,6 +71,8 @@ class SoundCard(object):
     def record_and_play(self, data):
         """
             Record and play data at the same time
+            There is a small delay between the recording
+            and the beginning of the sound
         """
         myrecording = sd.playrec(data, self.samplerate, self.channels)
         
